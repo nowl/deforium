@@ -64,6 +64,16 @@ class Map (object):
                 results.append(self.getMapElement(point[0], point[1]))
 
         return results
+
+    def swap(self, x1, y1, x2, y2):
+        elem = self.getMapElement(x1, y1)
+        elem.x = x2
+        elem.y = y2
+        elem2 = self.getMapElement(x2, y2)
+        self.map[self.width * y1 + x1] = elem2
+        elem2.x = x1
+        elem2.y = y1
+        self.map[self.width * y2 + x2] = elem
   
 class MapElementSprite (Sprite):
     def __init__(self, mapElement, imageCache):
@@ -73,7 +83,7 @@ class MapElementSprite (Sprite):
         self.rect = self.image.get_rect()
         pixelLocation = self.mapElement.meta['screenLocation']
         self.rect.move_ip(*pixelLocation)
-    
+
     def update(self, *args):
         pass
 
