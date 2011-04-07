@@ -4,20 +4,24 @@ from astar import AStar
 from imagecache import ImageCache
 from maputils import getCost, getHeuristicCost, setCost, isImpassable
 from random import random, randint
+from perlin import Perlin
 
 import sys, pygame
 
+per = Perlin()
+
 def initMapElement(elem):
-    if random() > 0.1:
-        i = 'normal'
-        t = 'normal'
-    else:
+    #val = per.perlin2d(elem.x, elem.y, 0.15, 4)
+    val = per.perlin2d(elem.x, elem.y, 40, 4)
+    if int(val * 5) == 0:
         i = 'impassable-1'
         t = 'impassable'
+    else:
+        i = 'normal'
+        t = 'normal'
         
     elem.meta = {'image': i,
-                 'type': t,
-                 'cost': 10}
+                 'type': t}
 
 class MapSprite (pygame.sprite.Sprite):
     def __init__(self, screenRect):
@@ -43,44 +47,48 @@ class MapSprite (pygame.sprite.Sprite):
     def _mapViewChangeListener(self, x, y):
         raise NotImplementedError
 
-class PlayerSprite (MapSprite):
-    def __init__(self, img, screenRect):
-        MapSprite.__init__(self, screenRect)
+class PlayerSprite (pygame.sprite.Sprite):
+    def __init__(self, img, x, y):
+        pygame.sprite.Sprite.__init__(self)
         self.image = img
         self.rect = self.image.get_rect()
-        self.dx = 0
-        self.dy = 0
+        self.rect.left = x
+        self.rect.top = y
+        self.location = [0, 0]
+        self.dx, self.dy = 0, 0
         self.collideFunc = pygame.sprite.collide_rect_ratio(0.8)
+        self.mapView = None
 
     def update(self, *args):
         needsUpdate = False
         
         if self.dx != 0:
             needsUpdate = True
-            self._modifyLocation(self.dx, 0)
+            #self._modifyLocation(self.dx, 0)
             
-            for sprite in self.mapView:
-                if self.collideFunc(self, sprite) and isImpassable(sprite.mapElement):
-                    self._modifyLocation(-self.dx, 0)
+            #for sprite in self.mapView:
+            #    if self.collideFunc(self, sprite) and isImpassable(sprite.mapElement):
+            #        self._modifyLocation(-self.dx, 0)
 
         if self.dy != 0:
             needsUpdate = True
-            self._modifyLocation(0, self.dy)
+            #self._modifyLocation(0, self.dy)
             
-            for sprite in self.mapView:
-                if self.collideFunc(self, sprite) and isImpassable(sprite.mapElement):
-                    self._modifyLocation(0, -self.dy)
+            #for sprite in self.mapView:
+            #    if self.collideFunc(self, sprite) and isImpassable(sprite.mapElement):
+            #        self._modifyLocation(0, -self.dy)
             
         if needsUpdate:
             imWidth, imHeight = self.mapView.imageSize
-            if self.mapView.view.right < self.mapView.map.width * imWidth and self.rect.right > self.screenRect.width-100:
-                self.mapView.moveView(imWidth * 6, 0)
-            if self.mapView.view.bottom < self.mapView.map.height * imHeight and self.rect.bottom > self.screenRect.height-100:
-                self.mapView.moveView(0, imHeight * 4)
-            if self.mapView.offsetX > 0 and self.rect.left < 100:
-                self.mapView.moveView(-imWidth * 6, 0)
-            if self.mapView.offsetY > 0 and self.rect.top < 100:
-                self.mapView.moveView(0, -imHeight * 4)
+            #if self.mapView.view.right < self.mapView.map.width * imWidth and self.rect.right > self.screenRect.width-100:
+            #    self.mapView.moveView(imWidth * 6, 0)
+            #if self.mapView.view.bottom < self.mapView.map.height * imHeight and self.rect.bottom > self.screenRect.height-100:
+            #    self.mapView.moveView(0, imHeight * 4)
+            #if self.mapView.offsetX > 0 and self.rect.left < 100:
+            #    self.mapView.moveView(-imWidth * 6, 0)
+            #if self.mapView.offsetY > 0 and self.rect.top < 100:
+            #    self.mapView.moveView(0, -imHeight * 4)
+            
 
     def getAdjacency(self, dir):
         adj = None
@@ -127,8 +135,8 @@ class PlayerSprite (MapSprite):
 
         return adj
 
-    def _mapViewChangeListener(self, x, y):
-        self.rect.move_ip(x, y)
+    #def _mapViewChangeListener(self, x, y):
+    #    self.rect.move_ip(x, y)
 
 class ActorSprite (MapSprite):
     def __init__(self, x, y, screenRect, img, dx, dy):
@@ -237,8 +245,7 @@ class GameLoop (object):
         self.imageCache.getSurface("terrains/Impassable5.jpg", "impassable-1")
 
         ball = self.imageCache.getCachedSurface("ball")
-        self.screenRect = pygame.Rect(0, 0, width, height)
-        self.playerSprite = PlayerSprite(ball, self.screenRect)
+        self.playerSprite = PlayerSprite(ball, width/2-16, height/2-16)
         self.sprites = pygame.sprite.Group(self.playerSprite)
         self.mapView = None
 
@@ -320,11 +327,11 @@ class GameLoop (object):
         renderClock = pygame.time.Clock()
         updateTick = 0
 
-        self.levelMap = Map(50, 50, mapElementCB = initMapElement)
+        self.levelMap = Map(mapElementCB = initMapElement)
         self.mapView = MapView(self.levelMap, self.imageCache, pygame.Rect(0, 0, 800, 600), 32, 32)
-        self.playerSprite.setMapView(self.mapView)
+        self.playerSprite.mapView = self.mapView
 
-        sprinkleMobs(10, 4, self.sprites, self.mapView, self.imageCache, self.screenRect, self.playerSprite)
+        #sprinkleMobs(10, 4, self.sprites, self.mapView, self.imageCache, self.screenRect, self.playerSprite)
 
         while 1:
             loops = 0

@@ -15,18 +15,12 @@ class MapElement (object):
         return '(%d, %d)' % (self.x, self.y)
         
 class Map (object):
-    def __init__(self, width, height, meta = None, mapElementCB = None):
-        self.width = width
-        self.height = height
-        self.meta = {'averageCost': 10}
-
-        self.map = []
-        for i in range(height):
-            for j in range(width):
-                self.map.append(MapElement(j, i, mapElementCB = mapElementCB))
+    def __init__(self, mapElementCB = None):
+        self.meta = {}
+        self.mapElementCB = mapElementCB
 
     def getMapElement(self, x, y):
-        return self.map[self.width * y + x]
+        return MapElement(x, y, self.mapElementCB)
 
     def getDiagonalAdjacencies(self, elem):
         x = elem.x
@@ -65,16 +59,6 @@ class Map (object):
 
         return results
 
-    def swap(self, x1, y1, x2, y2):
-        elem = self.getMapElement(x1, y1)
-        elem.x = x2
-        elem.y = y2
-        elem2 = self.getMapElement(x2, y2)
-        self.map[self.width * y1 + x1] = elem2
-        elem2.x = x1
-        elem2.y = y1
-        self.map[self.width * y2 + x2] = elem
-  
 class MapElementSprite (Sprite):
     def __init__(self, mapElement, imageCache):
         Sprite.__init__(self)
@@ -91,8 +75,9 @@ class MapView (Group):
     def __init__(self, map, imageCache, rectPixelView, imWidth, imHeight):
         Group.__init__(self)
         self._changeListeners = []
+        self.upperLeft = [0, 0]
+        self.numTiles = (int(rectPixelView.width / imWidth), int(rectPixelView.height / imHeight))
         self.map = map
-        self.worldRect = Rect(0, 0, self.map.width * imWidth, self.map.height * imHeight)
         self.imageCache = imageCache
         self.imageSize = (imWidth, imHeight)
         self.offsetX = 0
@@ -101,7 +86,6 @@ class MapView (Group):
 
     def setView(self, rect):
         self.view = rect
-        self.view.clamp_ip(self.worldRect)
 
         self.offsetX = self.view.left
         self.offsetY = self.view.top
@@ -111,7 +95,6 @@ class MapView (Group):
 
     def moveView(self, x, y):
         self.view.move_ip(x, y)
-        self.view.clamp_ip(self.worldRect)
 
         self.offsetX = self.view.left
         self.offsetY = self.view.top
@@ -123,13 +106,20 @@ class MapView (Group):
         self.empty()
         
         sprites = []
-        for elem in self.map.map:
-            w = self.imageSize[0]
-            h = self.imageSize[1]
-            pixelX = elem.x * w
-            pixelY = elem.y * h
-            if pixelX+w >= self.view.left and pixelX <= self.view.right and pixelY+h >= self.view.top and pixelY <= self.view.bottom:
-                elem.meta['screenLocation'] = pixelX-self.offsetX, pixelY-self.offsetY
+        #for elem in self.map.map:
+        #    w = self.imageSize[0]
+        #    h = self.imageSize[1]
+        #    pixelX = elem.x * w
+        #    pixelY = elem.y * h
+        #    if pixelX+w >= self.view.left and pixelX <= self.view.right and pixelY+h >= self.view.top and pixelY <= self.view.bottom:
+        #        elem.meta['screenLocation'] = pixelX-self.offsetX, pixelY-self.offsetY
+        #        sprites.append(MapElementSprite(elem, self.imageCache))
+        w = self.imageSize[0]
+        h = self.imageSize[1]
+        for x in range(self.numTiles[0] + 1):
+            for y in range(self.numTiles[1] + 1):
+                elem = self.map.getMapElement(x, y)
+                elem.meta['screenLocation'] = elem.x * w - self.offsetX, elem.y * h - self.offsetY
                 sprites.append(MapElementSprite(elem, self.imageCache))
         self.add(sprites)
 
