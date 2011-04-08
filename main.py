@@ -13,11 +13,16 @@ per = Perlin()
 def initMapElement(elem):
     #val = per.perlin2d(elem.x, elem.y, 0.15, 4)
     val = per.perlin2d(elem.x, elem.y, 40, 4)
-    if int(val * 5) == 0:
+    if int(val * 4) == 0:
         i = 'impassable-1'
-        t = 'impassable'
+        t = 'impassable'    
     else:
         i = 'normal'
+        t = 'normal'
+
+    val = per.perlin2d(elem.x, elem.y, 20, 4)
+    if int(val * 5) == 0:
+        i = 'mine'
         t = 'normal'
         
     elem.meta = {'image': i,
@@ -62,32 +67,8 @@ class PlayerSprite (pygame.sprite.Sprite):
     def update(self, *args):
         needsUpdate = False
         
-        if self.dx != 0:
-            needsUpdate = True
-            #self._modifyLocation(self.dx, 0)
-            
-            #for sprite in self.mapView:
-            #    if self.collideFunc(self, sprite) and isImpassable(sprite.mapElement):
-            #        self._modifyLocation(-self.dx, 0)
-
-        if self.dy != 0:
-            needsUpdate = True
-            #self._modifyLocation(0, self.dy)
-            
-            #for sprite in self.mapView:
-            #    if self.collideFunc(self, sprite) and isImpassable(sprite.mapElement):
-            #        self._modifyLocation(0, -self.dy)
-            
-        if needsUpdate:
-            imWidth, imHeight = self.mapView.imageSize
-            #if self.mapView.view.right < self.mapView.map.width * imWidth and self.rect.right > self.screenRect.width-100:
-            #    self.mapView.moveView(imWidth * 6, 0)
-            #if self.mapView.view.bottom < self.mapView.map.height * imHeight and self.rect.bottom > self.screenRect.height-100:
-            #    self.mapView.moveView(0, imHeight * 4)
-            #if self.mapView.offsetX > 0 and self.rect.left < 100:
-            #    self.mapView.moveView(-imWidth * 6, 0)
-            #if self.mapView.offsetY > 0 and self.rect.top < 100:
-            #    self.mapView.moveView(0, -imHeight * 4)
+        if self.dx != 0 or self.dy != 0:
+            self.mapView.moveViewByPixels(self.dx, self.dy)
             
 
     def getAdjacency(self, dir):
@@ -284,7 +265,7 @@ class GameLoop (object):
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
             
-            speed = 5
+            speed = 15
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -349,5 +330,5 @@ class GameLoop (object):
             self.render()
 
 if __name__ == '__main__':
-    game = GameLoop(30, 5)
+    game = GameLoop(10, 5)
     game.loop()

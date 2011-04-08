@@ -84,40 +84,33 @@ class MapView (Group):
         self.offsetY = 0
         self.setView(rectPixelView)
 
-    def setView(self, rect):
-        self.view = rect
-
-        self.offsetX = self.view.left
-        self.offsetY = self.view.top
-        
-        self._updateContainer()
-        self._updateChangeListeners(rect.left, rect.top)
-
-    def moveView(self, x, y):
-        self.view.move_ip(x, y)
-
+    def _updateView(self):
         self.offsetX = self.view.left
         self.offsetY = self.view.top
         
         self._updateContainer()
         self._updateChangeListeners(self.offsetX, self.offsetY)
 
+    def setView(self, rect):
+        self.view = rect
+        self._updateView()
+
+    def moveViewByPixels(self, x, y):
+        self.view.move_ip(x, y)
+        self._updateView()
+
     def _updateContainer(self):
         self.empty()
+
+        # TODO: create only the new tiles as the player moves
         
         sprites = []
-        #for elem in self.map.map:
-        #    w = self.imageSize[0]
-        #    h = self.imageSize[1]
-        #    pixelX = elem.x * w
-        #    pixelY = elem.y * h
-        #    if pixelX+w >= self.view.left and pixelX <= self.view.right and pixelY+h >= self.view.top and pixelY <= self.view.bottom:
-        #        elem.meta['screenLocation'] = pixelX-self.offsetX, pixelY-self.offsetY
-        #        sprites.append(MapElementSprite(elem, self.imageCache))
         w = self.imageSize[0]
         h = self.imageSize[1]
-        for x in range(self.numTiles[0] + 1):
-            for y in range(self.numTiles[1] + 1):
+        for xi in range(self.numTiles[0] + 1):
+            x = xi + int(self.offsetX/32)
+            for yi in range(self.numTiles[1] + 2):
+                y = yi + int(self.offsetY/32)
                 elem = self.map.getMapElement(x, y)
                 elem.meta['screenLocation'] = elem.x * w - self.offsetX, elem.y * h - self.offsetY
                 sprites.append(MapElementSprite(elem, self.imageCache))
