@@ -102,8 +102,6 @@ class MapView (Group):
     def _updateContainer(self):
         self.empty()
 
-        # TODO: create only the new tiles as the player moves
-        
         sprites = []
         w = self.imageSize[0]
         h = self.imageSize[1]
